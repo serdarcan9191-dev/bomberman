@@ -1,0 +1,158 @@
+@startuml Backend_Repository_Pattern_Class_Diagram
+
+package "backend.models" {
+    class GameRoom {
+        - room_id: str
+        - room_code: str
+        - players: list[Player]
+        - started: bool
+        - level_id: str
+        - level_width: int
+        - level_height: int
+        - level_data: Optional[LevelData]
+        - bombs: list[Bomb]
+        - enemies: list[Enemy]
+        + is_full(): bool
+        + add_player(player: Player): bool
+        + remove_player(player_id: str): Optional[Player]
+        + get_player(player_id: str): Optional[Player]
+        + get_player_by_socket(socket_id: str): Optional[Player]
+    }
+    
+    class Player {
+        - player_id: str
+        - username: str
+        - socket_id: str
+        - position: tuple[int, int]
+        - health: int
+        - ready: bool
+        - bomb_power: int
+        - bomb_count: int
+        - reached_exit: bool
+        + to_dict(): dict
+    }
+    
+    class Bomb {
+        - x: int
+        - y: int
+        - player_id: str
+        - timer: float
+        - exploded: bool
+        - explosion_timer: float
+        - explosion_tiles: list[tuple[int, int]]
+    }
+    
+    class Enemy {
+        - enemy_id: str
+        - enemy_type: str
+        - position: tuple[int, int]
+        - spawn_position: tuple[int, int]
+        - health: int
+        - alive: bool
+        - last_move_time: float
+        + to_dict(): dict
+    }
+    
+    GameRoom "1" *-- "0..*" Player : contains
+    GameRoom "1" *-- "0..*" Bomb : contains
+    GameRoom "1" *-- "0..*" Enemy : contains
+}
+
+package "backend.repository" {
+    class RoomRepository {
+        - connection_string: str
+        + __init__()
+        - _get_connection()
+        + create_room(room: GameRoom): bool
+        + get_room_by_code(room_code: str): Optional[GameRoom]
+        + get_room_by_id(room_id: str): Optional[GameRoom]
+        + update_room(room: GameRoom): bool
+        + delete_room(room_id: str): bool
+        + add_player_to_room(room_id: str, player: Player): bool
+        + remove_player_from_room(room_id: str, player_id: str): bool
+        + list_active_rooms(): List[GameRoom]
+        + room_code_exists(room_code: str): bool
+    }
+}
+
+package "backend.handlers" {
+    class RoomHandlers {
+        - rooms: dict[str, GameRoom]
+        - room_codes: dict[str, str]
+        - repository: RoomRepository
+        + handle_create_room(socket_id: str, username: str): dict
+        + handle_join_room(socket_id: str, username: str, room_code: str): dict
+        + handle_leave_room(socket_id: str): dict
+        + handle_list_rooms(): dict
+        - find_player_room_by_socket(socket_id: str): Optional[GameRoom]
+    }
+    
+    class GameHandlers {
+        - rooms: dict[str, GameRoom]
+        - repository: RoomRepository
+        - setup_service: GameSetupService
+        - movement_service: GameMovementService
+        - state_service: GameStateService
+        - query_service: GameQueryService
+        - start_service: GameStartService
+        - update_service: GameUpdateService
+        + handle_player_move(socket_id: str, direction: str): Optional[dict]
+        + handle_place_bomb(socket_id: str): Optional[dict]
+        + handle_player_ready(socket_id: str): Optional[dict]
+    }
+}
+
+package "backend.services" {
+    class GameSetupService {
+        + setup_level(room: GameRoom, level_id: str): bool
+        + spawn_enemies(room: GameRoom): None
+    }
+    
+    class GameStartService {
+        - setup_service: GameSetupService
+        - repository: RoomRepository
+        + start_game(room: GameRoom): bool
+    }
+}
+
+database "PostgreSQL" {
+    entity "rooms" {
+        * room_id : VARCHAR
+        * room_code : VARCHAR
+        * level_id : VARCHAR
+        * level_width : INT
+        * level_height : INT
+        * started : BOOLEAN
+    }
+    
+    entity "room_players" {
+        * room_id : VARCHAR
+        * player_id : VARCHAR
+        * username : VARCHAR
+        * socket_id : VARCHAR
+        * position_x : INT
+        * position_y : INT
+        * health : INT
+        * ready : BOOLEAN
+    }
+}
+
+RoomRepository ..> GameRoom : uses
+RoomRepository ..> Player : uses
+RoomHandlers --> RoomRepository : uses
+GameHandlers --> RoomRepository : uses
+GameHandlers --> GameSetupService : uses
+GameStartService --> GameSetupService : uses
+GameStartService --> RoomRepository : uses
+RoomRepository ..> "rooms" : queries
+RoomRepository ..> "room_players" : queries
+
+note right of RoomRepository
+    **Repository Pattern**
+    Veri erişim mantığını
+    iş mantığından ayırır.
+    SOLID - Dependency Inversion
+end note
+
+@enduml
+

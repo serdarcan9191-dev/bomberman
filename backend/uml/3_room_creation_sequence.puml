@@ -1,0 +1,52 @@
+@startuml Backend_Room_Creation_Sequence
+
+actor "Client" as Client
+participant "Socket.io Server" as Server
+participant "RoomHandlers" as Handler
+participant "RoomRepository" as Repository
+database "PostgreSQL" as DB
+
+Client -> Server: create_room(username)
+activate Server
+
+Server -> Handler: handle_create_room(socket_id, username)
+activate Handler
+
+Handler -> Handler: find_player_room_by_socket(socket_id)
+Handler -> Handler: generate_room_code()
+Handler -> Handler: create GameRoom instance
+Handler -> Handler: create Player instance
+Handler -> Handler: add player to room (in-memory)
+
+Handler -> Repository: create_room(room)
+activate Repository
+
+Repository -> Repository: _get_connection()
+Repository -> DB: INSERT INTO rooms (...)
+activate DB
+DB --> Repository: success
+deactivate DB
+
+Repository -> DB: INSERT INTO room_players (...)
+activate DB
+DB --> Repository: success
+deactivate DB
+
+Repository --> Handler: true
+deactivate Repository
+
+Handler -> Handler: update in-memory cache
+Handler --> Server: {type: "room_created", room_code: "ABC123", ...}
+deactivate Handler
+
+Server --> Client: emit("room_created", response)
+deactivate Server
+
+note right of Repository
+    **Repository Pattern**
+    Veritabanı işlemleri
+    Handler'dan ayrılmış
+end note
+
+@enduml
+

@@ -1,0 +1,89 @@
+@startuml Backend_Service_Layer_Class_Diagram
+
+package "backend.services" {
+    class GameSetupService {
+        + setup_level(room: GameRoom, level_id: str): bool
+        + spawn_enemies(room: GameRoom): None
+        - _load_level_data(level_id: str): Optional[LevelData]
+    }
+    
+    class GameMovementService {
+        + can_move(room: GameRoom, player: Player, direction: str): bool
+        + move_player(room: GameRoom, player: Player, direction: str): bool
+        + check_collision(room: GameRoom, x: int, y: int): bool
+    }
+    
+    class GameStateService {
+        + serialize_game_state(room: GameRoom): dict
+        + deserialize_game_state(data: dict): GameRoom
+    }
+    
+    class GameQueryService {
+        - rooms: dict[str, GameRoom]
+        + get_room_by_socket(socket_id: str): Optional[GameRoom]
+        + get_player_by_socket(socket_id: str): Optional[tuple[GameRoom, Player]]
+    }
+    
+    class GameStartService {
+        - setup_service: GameSetupService
+        - repository: RoomRepository
+        + start_game(room: GameRoom): bool
+    }
+    
+    class GameUpdateService {
+        - movement_service: GameMovementService
+        - state_service: GameStateService
+        - setup_service: GameSetupService
+        + update_game(room: GameRoom, delta_time: float): None
+        + update_bombs(room: GameRoom, delta_time: float): None
+        + update_enemies(room: GameRoom, delta_time: float): None
+    }
+    
+    class BombService {
+        + place_bomb(room: GameRoom, player: Player): bool
+        + explode_bomb(room: GameRoom, bomb: Bomb): None
+        + check_explosion_collision(room: GameRoom, x: int, y: int): bool
+    }
+    
+    class EnemyDamageService {
+        + check_enemy_damage(room: GameRoom, explosion_tiles: list): None
+        + kill_enemy(room: GameRoom, enemy: Enemy): None
+    }
+}
+
+package "backend.models" {
+    class GameRoom {
+        + room_id: str
+        + players: list[Player]
+        + bombs: list[Bomb]
+        + enemies: list[Enemy]
+    }
+}
+
+package "backend.repository" {
+    class RoomRepository {
+        + update_room(room: GameRoom): bool
+    }
+}
+
+GameSetupService --> GameRoom : uses
+GameMovementService --> GameRoom : uses
+GameStateService --> GameRoom : uses
+GameQueryService --> GameRoom : uses
+GameStartService --> GameSetupService : uses
+GameStartService --> RoomRepository : uses
+GameUpdateService --> GameMovementService : uses
+GameUpdateService --> GameStateService : uses
+GameUpdateService --> GameSetupService : uses
+BombService --> GameRoom : uses
+EnemyDamageService --> GameRoom : uses
+
+note right of GameSetupService
+    **Service Layer Pattern**
+    Her service tek bir
+    sorumluluğa sahip
+    SOLID - Single Responsibility
+end note
+
+@enduml
+

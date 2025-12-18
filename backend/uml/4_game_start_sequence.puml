@@ -1,0 +1,63 @@
+@startuml Backend_Game_Start_Sequence
+
+participant "Client 1" as C1
+participant "Client 2" as C2
+participant "Socket.io Server" as Server
+participant "GameHandlers" as Handler
+participant "GameStartService" as StartService
+participant "GameSetupService" as SetupService
+participant "RoomRepository" as Repository
+database "PostgreSQL" as DB
+
+C1 -> Server: player_ready()
+C2 -> Server: player_ready()
+
+Server -> Handler: handle_player_ready(socket_id)
+activate Handler
+
+Handler -> Handler: get room and player
+Handler -> Handler: set player.ready = true
+
+alt Both players ready
+    Handler -> StartService: start_game(room)
+    activate StartService
+    
+    StartService -> SetupService: setup_level(room, level_id)
+    activate SetupService
+    SetupService -> SetupService: load level data
+    SetupService -> SetupService: spawn enemies
+    SetupService --> StartService: success
+    deactivate SetupService
+    
+    StartService -> Repository: update_room(room)
+    activate Repository
+    Repository -> DB: UPDATE rooms SET started = true
+    activate DB
+    DB --> Repository: success
+    deactivate DB
+    Repository --> StartService: true
+    deactivate Repository
+    
+    StartService --> Handler: true
+    deactivate StartService
+    
+    Handler -> Server: broadcast game_started
+    Server --> C1: emit("game_started", game_state)
+    Server --> C2: emit("game_started", game_state)
+else Not all ready
+    Handler -> Server: broadcast player_ready
+    Server --> C1: emit("player_ready", player_data)
+    Server --> C2: emit("player_ready", player_data)
+end
+
+Handler --> Server: response
+deactivate Handler
+
+note right of StartService
+    **Service Layer Pattern**
+    İş mantığı ayrılmış
+    SOLID - Single Responsibility
+end note
+
+@enduml
+

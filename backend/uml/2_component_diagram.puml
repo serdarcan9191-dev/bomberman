@@ -1,0 +1,66 @@
+@startuml Backend_Component_Diagram
+
+package "Client" {
+    [Socket.io Client]
+}
+
+package "Backend Server" {
+    component [Socket.io Server] as Server {
+        [Event Handlers]
+    }
+    
+    component [Room Handlers] as RoomHandlers {
+        [handle_create_room]
+        [handle_join_room]
+        [handle_leave_room]
+        [handle_list_rooms]
+    }
+    
+    component [Game Handlers] as GameHandlers {
+        [handle_player_move]
+        [handle_place_bomb]
+        [handle_player_ready]
+    }
+    
+    component [Services] as Services {
+        [GameSetupService]
+        [GameMovementService]
+        [GameStateService]
+        [GameQueryService]
+        [GameStartService]
+        [GameUpdateService]
+    }
+    
+    component [Repository] as Repository {
+        [RoomRepository]
+    }
+    
+    database "PostgreSQL" {
+        [rooms table]
+        [room_players table]
+    }
+}
+
+[Socket.io Client] --> [Socket.io Server] : WebSocket Connection
+[Socket.io Server] --> [Room Handlers] : routes room events
+[Socket.io Server] --> [Game Handlers] : routes game events
+[Room Handlers] --> [Repository] : data access
+[Game Handlers] --> [Repository] : data access
+[Game Handlers] --> [Services] : business logic
+[Repository] --> [rooms table] : SQL queries
+[Repository] --> [room_players table] : SQL queries
+
+note right of Repository
+    **Repository Pattern**
+    Veri erişim katmanı
+    İş mantığından bağımsız
+end note
+
+note right of Services
+    **Service Layer**
+    İş mantığı
+    SOLID - Single Responsibility
+end note
+
+@enduml
+

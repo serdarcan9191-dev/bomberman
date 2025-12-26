@@ -1,0 +1,75 @@
+@startuml Strategy_Pattern_Class_Diagram
+
+package "bomberman.model" {
+    enum EnemyType {
+        STATIC
+        CHASING
+        SMART
+    }
+    
+    abstract class Enemy {
+        # position: Tuple[int, int]
+        # health: int
+        # max_health: int
+        # enemy_type: EnemyType
+        # move_interval: float
+        + movement_interval(): float
+        + is_alive(): bool
+        + take_damage(amount: int): None
+        + health_percentage(): float
+        + {abstract} update(player_pos: Tuple[int, int] | None, tile_provider: Callable): None
+    }
+    
+    class StaticEnemy {
+        - MAX_HEALTH: int = 20
+        - _spawn_position: Tuple[int, int]
+        + update(player_pos, tile_provider): None
+    }
+    
+    class ChasingEnemy {
+        - MAX_HEALTH: int = 30
+        - _spawn_position: Tuple[int, int]
+        - _move_horizontal: bool
+        - _direction: int
+        - _stuck_attempts: int
+        + update(player_pos, tile_provider): None
+    }
+    
+    class SmartEnemy {
+        - MAX_HEALTH: int = 40
+        + update(player_pos, tile_provider): None
+    }
+    
+    Enemy <|-- StaticEnemy : extends
+    Enemy <|-- ChasingEnemy : extends
+    Enemy <|-- SmartEnemy : extends
+    Enemy --> EnemyType : uses
+}
+
+note right of Enemy
+    **Strategy Pattern**
+    Her alt sınıf farklı
+    hareket stratejisi uygular.
+    SOLID - Open/Closed
+end note
+
+note right of StaticEnemy
+    **Static Strategy**
+    Doğduğu yerden sadece
+    1 birim uzaklığa hareket
+end note
+
+note right of ChasingEnemy
+    **Chasing Strategy**
+    Doğduğu satır/sütun
+    boyunca hareket eder
+end note
+
+note right of SmartEnemy
+    **Smart Strategy**
+    Oyuncuya doğru en kısa
+    yolu bulmaya çalışır
+end note
+
+@enduml
+

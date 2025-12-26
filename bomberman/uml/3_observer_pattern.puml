@@ -1,0 +1,80 @@
+@startuml Observer_Pattern_Class_Diagram
+
+package "bomberman.service" {
+    class GameEventService {
+        - _observers: list[GameObserver]
+        - _event_listeners: dict[GameEventType, list[Callable]]
+        + attach(observer: GameObserver): None
+        + detach(observer: GameObserver): None
+        + notify(event: GameEvent): None
+        + emit(event_type: GameEventType, **data): None
+    }
+    
+    class GameEvent {
+        + event_type: GameEventType
+        + data: dict[str, Any]
+    }
+    
+    enum GameEventType {
+        BOMB_PLACED
+        BOMB_EXPLODED
+        ENEMY_KILLED
+        PLAYER_DAMAGED
+        PLAYER_DIED
+        POWERUP_COLLECTED
+        WALL_DESTROYED
+        LEVEL_COMPLETED
+    }
+    
+    abstract class GameObserver {
+        + on_event(event: GameEvent): None
+    }
+    
+    class SoundObserver {
+        - _sound_service: SoundService
+        + on_event(event: GameEvent): None
+    }
+    
+    class ScoreObserver {
+        - score: int
+        - walls_destroyed: int
+        - enemies_killed: int
+        + on_event(event: GameEvent): None
+        + reset(): None
+    }
+    
+    class LoggerObserver {
+        + on_event(event: GameEvent): None
+    }
+    
+    class SoundService {
+        + play_sound(sound_name: str): None
+        + play_music(music_name: str, loop: bool, volume: float): None
+    }
+    
+    GameEventService "1" o-- "*" GameObserver : notifies
+    GameEventService --> GameEvent : creates
+    GameEvent --> GameEventType : uses
+    GameObserver <|-- SoundObserver : implements
+    GameObserver <|-- ScoreObserver : implements
+    GameObserver <|-- LoggerObserver : implements
+    SoundObserver --> SoundService : uses
+}
+
+note right of GameEventService
+    **Observer Pattern**
+    Subject (Gözlemlenen)
+    Event'leri yönetir ve
+    observer'ları bilgilendirir.
+    SOLID - Loose Coupling
+end note
+
+note right of GameObserver
+    **Observer Interface**
+    Tüm observer'lar bu
+    interface'i implement eder.
+    SOLID - Open/Closed
+end note
+
+@enduml
+

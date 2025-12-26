@@ -1,0 +1,70 @@
+@startuml Decorator_Pattern_Sequence_Diagram
+
+participant "GameController" as Controller
+participant "Bomberman" as Bomberman
+participant "BombermanAdapter" as Adapter
+participant "SpeedBoostDecorator" as SpeedDec
+participant "BombCountBoostDecorator" as CountDec
+participant "BombPowerBoostDecorator" as PowerDec
+
+Controller -> Bomberman: create Bomberman()
+activate Bomberman
+Bomberman --> Controller: bomberman instance
+deactivate Bomberman
+
+Controller -> Adapter: BombermanAdapter(bomberman)
+activate Adapter
+Adapter --> Controller: adapter instance
+deactivate Adapter
+
+Controller -> SpeedDec: SpeedBoostDecorator(adapter)
+activate SpeedDec
+SpeedDec --> Controller: speed_decorator
+deactivate SpeedDec
+
+Controller -> CountDec: BombCountBoostDecorator(speed_decorator)
+activate CountDec
+CountDec --> Controller: count_decorator
+deactivate CountDec
+
+Controller -> PowerDec: BombPowerBoostDecorator(count_decorator)
+activate PowerDec
+PowerDec --> Controller: final_decorator
+deactivate PowerDec
+
+Controller -> PowerDec: get_speed()
+activate PowerDec
+PowerDec -> CountDec: get_speed()
+activate CountDec
+CountDec -> SpeedDec: get_speed()
+activate SpeedDec
+SpeedDec -> Adapter: get_speed()
+activate Adapter
+Adapter -> Bomberman: speed
+activate Bomberman
+Bomberman --> Adapter: 1.0
+deactivate Bomberman
+Adapter --> SpeedDec: 1.0
+deactivate Adapter
+SpeedDec -> SpeedDec: multiply by 1.25
+SpeedDec --> CountDec: 1.25
+deactivate SpeedDec
+CountDec --> PowerDec: 1.25
+deactivate CountDec
+PowerDec --> Controller: 1.25
+deactivate PowerDec
+
+note right of Adapter
+    **Adapter Pattern**
+    Bomberman'ı PlayerInterface'e
+    adapte eder
+end note
+
+note right of SpeedDec
+    **Decorator Pattern**
+    Runtime'da özellik ekler
+    Chain of decorators
+end note
+
+@enduml
+

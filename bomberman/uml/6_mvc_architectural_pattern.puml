@@ -1,0 +1,142 @@
+@startuml Professional_MVC_Diagram
+
+!theme materia
+' Uncomment the line above if your PlantUML version supports themes, for a modern look.
+' If not, the skinparams below provide a clean, professional style.
+
+skinparam {
+    DefaultFontName "Segoe UI"
+    DefaultFontSize 12
+    DefaultFontColor #222222
+
+    ArrowColor #666666
+    ArrowThickness 1.5
+    
+    Component {
+        BorderColor #444444
+        ArrowColor #555555
+        BackgroundColor #EFEFEF
+        BorderThickness 1.5
+    }
+
+    Package {
+        BorderColor #888888
+        BorderThickness 2
+        BackgroundColor #FAFAFA
+        FontColor #444444
+        FontSize 14
+        StereotypeFontColor #444444
+    }
+    
+    Note {
+        BackgroundColor #FFFFE8
+        BorderColor #BBAA88
+        FontColor #333333
+    }
+    
+    Title {
+        FontSize 20
+        FontColor #111111
+    }
+}
+
+title **Bomberman: MVC Architectural Pattern**
+
+' === LAYERS ===
+package "View Layer" as ViewLayer <<Boundary>> {
+    [GameScene]
+    [MapRenderer]
+    [CharacterFactory]
+}
+
+package "Controller Layer" as ControllerLayer <<Control>> {
+    [GameController]
+}
+
+package "Model Layer" as ModelLayer {
+    [Bomberman] as BombermanModel
+    [Enemy] as EnemyModel
+    [LevelDefinition] as LevelModel
+    [PlayerDecorator] as DecoratorModel
+}
+
+package "Service Layer" as ServiceLayer <<Application>> {
+    [LevelService]
+    [CollisionService]
+    [ExplosionService]
+    [GameEventService]
+    [PowerupService]
+}
+
+
+' === RELATIONSHIPS ===
+' Layout hints
+ControllerLayer -[hidden]right- ViewLayer
+ModelLayer -[hidden]down- ControllerLayer
+ServiceLayer -[hidden]down- ModelLayer
+
+' --- User Interaction Flow ---
+actor User
+User --> GameScene : Interacts
+
+GameScene --> GameController : Forwards User Actions (e.g., move, place bomb)
+
+' --- Controller to Model/Services ---
+GameController --> ServiceLayer : Uses Services for business logic
+GameController --> ModelLayer : Updates Model state
+
+' Explicit Service Usage
+GameController --> LevelService
+GameController --> CollisionService
+GameController --> ExplosionService
+GameController --> GameEventService
+GameController --> PowerupService
+GameController --> DecoratorModel
+
+' Explicit Model Updates
+GameController --> BombermanModel
+GameController --> EnemyModel
+GameController --> LevelModel
+
+' --- Model/Service to View (Update Flow) ---
+ModelLayer ..> GameController : Notifies of State Changes (Observer Pattern)
+ServiceLayer ..> GameController : Notifies of Events
+
+GameController ..> GameScene : Updates View with new data
+
+' --- Internal View Dependencies ---
+GameScene -> MapRenderer : Uses to draw map
+GameScene -> CharacterFactory : Uses to create character visuals
+
+
+' === NOTES ===
+note top of ViewLayer
+  **Responsibility:**
+  - Render the UI based on model data.
+  - Delegate user input to the Controller.
+  - No business logic.
+end note
+
+note bottom of ControllerLayer
+  **Responsibility:**
+  - Orchestrate the application flow.
+  - Mediate between View and Model/Services.
+end note
+
+note right of ModelLayer
+  **Responsibility:**
+  - Represent application data and state.
+  - Contain core data structures.
+  - Independent of UI.
+end note
+
+note bottom of ServiceLayer
+  **Responsibility:**
+  - Encapsulate complex business logic.
+  - Promote Separation of Concerns.
+  - Examples: Collision Detection,
+    Level Loading, Game State updates.
+end note
+
+@enduml
+

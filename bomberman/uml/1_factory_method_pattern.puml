@@ -1,0 +1,55 @@
+@startuml Factory_Method_Pattern_Class_Diagram
+
+package "bomberman.view" {
+    class CharacterFactory {
+        {static} + roster(): Sequence[Character]
+        {static} + find_by_id(character_id: str): Character | None
+    }
+    
+    class Character {
+        + id: str
+        + name: str
+        + description: str
+        + accent_color: ConfigColor
+        + avatar_color: ConfigColor
+        + tagline: str | None
+        + image_name: str | None
+    }
+    
+    class MonsterFactory {
+        {static} + roster(): Sequence[Monster]
+        {static} + create(enemy_type: str, position: Tuple[int, int]): Enemy
+    }
+    
+    class Monster {
+        + id: str
+        + name: str
+        + image_name: str
+        + description: str
+    }
+    
+    class EffectFactory {
+        {static} + roster(): Sequence[Effect]
+    }
+    
+    class Effect {
+        + id: str
+        + name: str
+        + image_name: str
+        + description: str
+    }
+    
+    CharacterFactory ..> Character : creates
+    MonsterFactory ..> Monster : creates
+    EffectFactory ..> Effect : creates
+}
+
+note right of CharacterFactory
+    **Factory Method Pattern**
+    Nesne oluşturma mantığını
+    merkezi bir yerde toplar.
+    SOLID - Open/Closed
+end note
+
+@enduml
+

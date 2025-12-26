@@ -1,0 +1,84 @@
+@startuml Adapter_Decorator_Pattern_Class_Diagram
+
+package "bomberman.model" {
+    class Bomberman {
+        + character: Character
+        + position: Tuple[int, int]
+        + health: int
+        + speed: float
+        + bomb_count: int
+        + bomb_power: int
+        + take_damage(amount: int): None
+        + heal(amount: int): None
+        + is_alive(): bool
+    }
+    
+    interface PlayerInterface {
+        + get_speed(): float
+        + get_bomb_count(): int
+        + get_bomb_power(): int
+        + get_health(): int
+    }
+    
+    class BombermanAdapter {
+        - _bomberman: Bomberman
+        + get_speed(): float
+        + get_bomb_count(): int
+        + get_bomb_power(): int
+        + get_health(): int
+    }
+    
+    abstract class PlayerDecorator {
+        - _player: PlayerInterface
+        + get_speed(): float
+        + get_bomb_count(): int
+        + get_bomb_power(): int
+        + get_health(): int
+    }
+    
+    class SpeedBoostDecorator {
+        - SPEED_MULTIPLIER: float = 1.25
+        + get_speed(): float
+    }
+    
+    class BombCountBoostDecorator {
+        - BOMB_COUNT_BOOST: int = 1
+        + get_bomb_count(): int
+    }
+    
+    class BombPowerBoostDecorator {
+        - BOMB_POWER_BOOST: int = 1
+        + get_bomb_power(): int
+    }
+    
+    class HealthBoostDecorator {
+        - HEALTH_BOOST: int = 20
+        + get_health(): int
+    }
+    
+    BombermanAdapter ..|> PlayerInterface : implements
+    PlayerDecorator ..|> PlayerInterface : implements
+    SpeedBoostDecorator --|> PlayerDecorator : extends
+    BombCountBoostDecorator --|> PlayerDecorator : extends
+    BombPowerBoostDecorator --|> PlayerDecorator : extends
+    HealthBoostDecorator --|> PlayerDecorator : extends
+    BombermanAdapter --> Bomberman : adapts
+    PlayerDecorator --> PlayerInterface : decorates
+}
+
+note right of BombermanAdapter
+    **Adapter Pattern**
+    Bomberman'ı PlayerInterface'e
+    adapte eder.
+    SOLID - Dependency Inversion
+end note
+
+note right of PlayerDecorator
+    **Decorator Pattern**
+    Runtime'da power-up özellikleri
+    ekler.
+    SOLID - Open/Closed
+end note
+
+@enduml
+

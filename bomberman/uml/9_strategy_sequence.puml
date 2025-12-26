@@ -1,0 +1,62 @@
+@startuml Strategy_Pattern_Sequence_Diagram
+
+participant "GameController" as Controller
+participant "StaticEnemy" as Static
+participant "ChasingEnemy" as Chasing
+participant "SmartEnemy" as Smart
+
+Controller -> Static: create StaticEnemy(position)
+activate Static
+Static --> Controller: static_enemy
+deactivate Static
+
+Controller -> Chasing: create ChasingEnemy(position)
+activate Chasing
+Chasing --> Controller: chasing_enemy
+deactivate Chasing
+
+Controller -> Smart: create SmartEnemy(position)
+activate Smart
+Smart --> Controller: smart_enemy
+deactivate Smart
+
+loop Game Update Loop
+    Controller -> Static: update(player_pos, tile_provider)
+    activate Static
+    Static -> Static: move within 1 unit of spawn
+    Static --> Controller: position updated
+    deactivate Static
+    
+    Controller -> Chasing: update(player_pos, tile_provider)
+    activate Chasing
+    Chasing -> Chasing: move along row/column
+    Chasing --> Controller: position updated
+    deactivate Chasing
+    
+    Controller -> Smart: update(player_pos, tile_provider)
+    activate Smart
+    Smart -> Smart: find shortest path to player
+    Smart --> Controller: position updated
+    deactivate Smart
+end
+
+note right of Static
+    **Static Strategy**
+    Sınırlı hareket
+    Doğduğu yerden max 1 birim
+end note
+
+note right of Chasing
+    **Chasing Strategy**
+    Satır/sütun boyunca
+    ping-pong hareketi
+end note
+
+note right of Smart
+    **Smart Strategy**
+    En kısa yol algoritması
+    Oyuncuya doğru hareket
+end note
+
+@enduml
+

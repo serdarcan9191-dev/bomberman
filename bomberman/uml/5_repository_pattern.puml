@@ -1,0 +1,94 @@
+@startuml Repository_Pattern_Class_Diagram
+
+package "bomberman.repository" {
+    ' Note: Interface is implicit in Python (Duck Typing)
+    ' Both repositories implement the same interface
+    
+    class LevelRepositoryJSON {
+        - _json_path: Path
+        - _cache: dict[str, LevelDefinition] | None
+        + find_by_id(level_id: str): Optional[LevelDefinition]
+        + find_all(): Iterable[LevelDefinition]
+        + save(definition: LevelDefinition): None
+        + delete(level_id: str): bool
+        - _load_all(): dict[str, LevelDefinition]
+        - _map_dict_to_definition(data: dict): LevelDefinition
+    }
+    
+    class LevelRepositoryPostgreSQL {
+        - _connection_string: str
+        + find_by_id(level_id: str): Optional[LevelDefinition]
+        + find_all(): Iterable[LevelDefinition]
+        + save(definition: LevelDefinition): None
+        + delete(level_id: str): bool
+        - _get_connection()
+        - _get_positions(conn, level_id, row): dict
+        - _get_enemy_spawns(conn, level_id, row): list[dict]
+        - _map_row_to_definition(row, positions, enemy_spawns): LevelDefinition
+    }
+    
+    class LevelDefinition {
+        + id: str
+        + width: int
+        + height: int
+        + theme: Theme
+        + player_start: tuple[int, int]
+        + enemy_positions: tuple[tuple[int, int], ...]
+        + exit_position: tuple[int, int]
+        + breakable_positions: tuple[tuple[int, int], ...]
+        + hard_positions: tuple[tuple[int, int], ...]
+    }
+}
+
+package "bomberman.service" {
+    class LevelService {
+        - repository: "LevelRepository (JSON or PostgreSQL)"
+        + load_level(level_id: str): Optional[LevelDefinition]
+        + list_levels(): Iterable[LevelDefinition]
+    }
+}
+
+database "JSON File" {
+    entity "levels.json" {
+        * id : string
+        * width : int
+        * height : int
+        * theme : string
+        * ...
+    }
+}
+
+database "PostgreSQL" {
+    entity "levels table" {
+        * id : VARCHAR
+        * width : INT
+        * height : INT
+        * theme : VARCHAR
+        * ...
+    }
+}
+
+' Both repositories share the same interface (implicit in Python)
+LevelRepositoryJSON ..|> "Repository Interface" : implements (implicit)
+LevelRepositoryPostgreSQL ..|> "Repository Interface" : implements (implicit)
+LevelService --> "Repository Interface" : uses (Duck Typing)
+LevelRepositoryJSON ..> "levels.json" : reads/writes
+LevelRepositoryPostgreSQL ..> "levels table" : queries
+
+note right of LevelRepositoryJSON
+    **Repository Pattern**
+    Veri erişim mantığını
+    iş mantığından ayırır.
+    SOLID - Dependency Inversion
+    Python'da interface implicit
+    (Duck Typing)
+end note
+
+note right of LevelService
+    **Service Layer**
+    Repository interface'ine
+    bağımlı, somut implementasyona değil
+end note
+
+@enduml
+

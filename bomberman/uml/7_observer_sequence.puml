@@ -1,0 +1,48 @@
+@startuml Observer_Pattern_Sequence_Diagram
+
+participant "GameController" as Controller
+participant "GameEventService" as EventService
+participant "SoundObserver" as SoundObs
+participant "ScoreObserver" as ScoreObs
+participant "LoggerObserver" as LogObs
+participant "SoundService" as SoundSvc
+
+Controller -> EventService: emit(BOMB_EXPLODED, data)
+activate EventService
+
+EventService -> EventService: create GameEvent
+EventService -> EventService: notify(event)
+
+EventService -> SoundObs: on_event(event)
+activate SoundObs
+SoundObs -> SoundSvc: play_sound("explosion.wav")
+activate SoundSvc
+SoundSvc --> SoundObs: done
+deactivate SoundSvc
+SoundObs --> EventService: done
+deactivate SoundObs
+
+EventService -> ScoreObs: on_event(event)
+activate ScoreObs
+ScoreObs -> ScoreObs: update score
+ScoreObs --> EventService: done
+deactivate ScoreObs
+
+EventService -> LogObs: on_event(event)
+activate LogObs
+LogObs -> LogObs: logger.debug(...)
+LogObs --> EventService: done
+deactivate LogObs
+
+EventService --> Controller: done
+deactivate EventService
+
+note right of EventService
+    **Observer Pattern**
+    Subject tüm observer'ları
+    bilgilendirir.
+    Loose Coupling
+end note
+
+@enduml
+

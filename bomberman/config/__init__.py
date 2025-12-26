@@ -1,0 +1,4 @@
+"""
+Configuration: Uygulama yapılandırma dosyaları
+"""
+

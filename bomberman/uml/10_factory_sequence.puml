@@ -1,0 +1,62 @@
+@startuml Factory_Method_Pattern_Sequence_Diagram
+
+participant "GameController" as Controller
+participant "CharacterFactory" as CharFactory
+participant "MonsterFactory" as MonsterFactory
+participant "EffectFactory" as EffectFactory
+participant "Character" as Character
+participant "Monster" as Monster
+participant "Effect" as Effect
+
+Controller -> CharFactory: roster()
+activate CharFactory
+CharFactory -> Character: create Character(...)
+activate Character
+Character --> CharFactory: character instance
+deactivate Character
+CharFactory --> Controller: Sequence[Character]
+deactivate CharFactory
+
+Controller -> CharFactory: find_by_id("bomberman")
+activate CharFactory
+CharFactory -> CharFactory: search in roster
+CharFactory --> Controller: Character | None
+deactivate CharFactory
+
+Controller -> MonsterFactory: roster()
+activate MonsterFactory
+MonsterFactory -> Monster: create Monster(...)
+activate Monster
+Monster --> MonsterFactory: monster instance
+deactivate Monster
+MonsterFactory --> Controller: Sequence[Monster]
+deactivate MonsterFactory
+
+Controller -> MonsterFactory: create("CHASING", position)
+activate MonsterFactory
+MonsterFactory -> MonsterFactory: determine enemy type
+MonsterFactory -> "ChasingEnemy": create ChasingEnemy(position)
+activate "ChasingEnemy"
+"ChasingEnemy" --> MonsterFactory: enemy instance
+deactivate "ChasingEnemy"
+MonsterFactory --> Controller: Enemy instance
+deactivate MonsterFactory
+
+Controller -> EffectFactory: roster()
+activate EffectFactory
+EffectFactory -> Effect: create Effect(...)
+activate Effect
+Effect --> EffectFactory: effect instance
+deactivate Effect
+EffectFactory --> Controller: Sequence[Effect]
+deactivate EffectFactory
+
+note right of CharFactory
+    **Factory Method Pattern**
+    Nesne oluşturma mantığı
+    merkezi bir yerde.
+    SOLID - Open/Closed
+end note
+
+@enduml
+

@@ -5,24 +5,24 @@ package "Client" {
 }
 
 package "Backend Server" {
-    component [Socket.io Server] as Server {
+    component Server as "Socket.io Server" {
         [Event Handlers]
     }
     
-    component [Room Handlers] as RoomHandlers {
+    component RoomHandlers as "Room Handlers" {
         [handle_create_room]
         [handle_join_room]
         [handle_leave_room]
         [handle_list_rooms]
     }
     
-    component [Game Handlers] as GameHandlers {
+    component GameHandlers as "Game Handlers" {
         [handle_player_move]
         [handle_place_bomb]
         [handle_player_ready]
     }
     
-    component [Services] as Services {
+    component Services as "Services" {
         [GameSetupService]
         [GameMovementService]
         [GameStateService]
@@ -31,24 +31,23 @@ package "Backend Server" {
         [GameUpdateService]
     }
     
-    component [Repository] as Repository {
+    component Repository as "Repository" {
         [RoomRepository]
     }
     
-    database "PostgreSQL" {
+    database PostgreSQL {
         [rooms table]
         [room_players table]
     }
 }
 
-[Socket.io Client] --> [Socket.io Server] : WebSocket Connection
-[Socket.io Server] --> [Room Handlers] : routes room events
-[Socket.io Server] --> [Game Handlers] : routes game events
-[Room Handlers] --> [Repository] : data access
-[Game Handlers] --> [Repository] : data access
-[Game Handlers] --> [Services] : business logic
-[Repository] --> [rooms table] : SQL queries
-[Repository] --> [room_players table] : SQL queries
+[Socket.io Client] --> Server : WebSocket Connection
+Server --> RoomHandlers : routes room events
+Server --> GameHandlers : routes game events
+RoomHandlers --> Repository : data access
+GameHandlers --> Repository : data access
+GameHandlers --> Services : business logic
+Repository --> PostgreSQL : SQL queries
 
 note right of Repository
     **Repository Pattern**

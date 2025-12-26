@@ -62,9 +62,15 @@ class GameSetupService:
             logger.warning(f"Cannot spawn enemies: level_data not loaded for room {room.room_id}")
             return
         
+        # MonsterFactory'yi dinamik olarak import et
+        try:
+            from bomberman.view.characters import MonsterFactory
+        except ImportError:
+            logger.error("MonsterFactory could not be imported. Check project structure.")
+            return
+
         room.enemies = []
         
-        # Level definition'ı level_service'den al (duplicate JSON okumayı önlemek için)
         level_def = get_level_definition(room.level_id)
         if not level_def:
             logger.warning(f"Level definition not found for {room.level_id}")
@@ -73,7 +79,6 @@ class GameSetupService:
         enemy_spawns = level_def.get("enemy_spawns", [])
         enemy_positions = level_def.get("enemy_positions", [])
         
-        # Eğer enemy_positions yoksa, hesapla (client ile aynı mantık)
         if not enemy_positions:
             enemy_positions = self._calculate_enemy_positions(
                 room.level_id,
@@ -81,42 +86,40 @@ class GameSetupService:
                 enemy_spawns
             )
         
-        # Düşmanları spawn et
         positions_iter = iter(enemy_positions)
         enemy_id_counter = 0
         
         for spawn in enemy_spawns:
-            enemy_type = spawn.get("type", "CHASING").lower()  # "STATIC", "CHASING", "SMART"
+            enemy_type_str = spawn.get("type", "CHASING")
             count = spawn.get("count", 0)
             
             for _ in range(count):
                 try:
-                    pos_tuple = next(positions_iter)
-                    if isinstance(pos_tuple, list) and len(pos_tuple) >= 2:
-                        pos = (pos_tuple[0], pos_tuple[1])
-                    elif isinstance(pos_tuple, tuple) and len(pos_tuple) >= 2:
-                        pos = pos_tuple
-                    else:
-                        continue
+                    pos = next(positions_iter)
                     
-                    # Geçerli pozisyon kontrolü
-                    if not room.level_data.can_move_to(pos[0], pos[1]):
+                    # Factory'den gelen nesne client-side Enemy, biz backend-side Enemy'ye dönüştüreceğiz.
+                    # Bu, mimari bir sorunu çözmek için bir workaround. İdealde, domain modelleri ortak olurdu.
+                    client_enemy_instance = MonsterFactory.create(enemy_type_str, pos)
+                    if not client_enemy_instance:
                         continue
-                    
+
                     enemy = Enemy(
                         enemy_id=f"enemy_{enemy_id_counter}",
-                        enemy_type=enemy_type,
+                        enemy_type=client_enemy_instance.enemy_type.value.lower(),
                         position=pos,
-                        spawn_position=pos,  # Doğduğu pozisyonu kaydet
-                        health=100,
+                        spawn_position=pos,
+                        health=client_enemy_instance.max_health,
                         alive=True,
                         last_move_time=0.0
                     )
                     room.enemies.append(enemy)
                     enemy_id_counter += 1
-                    logger.info(f"Spawned {enemy_type} enemy at {pos}")
+                    logger.info(f"Spawned {enemy_type_str} enemy at {pos} using Factory")
                 except StopIteration:
                     break
+                except (ValueError, KeyError) as e:
+                    logger.error(f"Failed to create enemy of type {enemy_type_str}: {e}")
+                    continue
         
         logger.info(f"Spawned {len(room.enemies)} enemies in room {room.room_id}")
     

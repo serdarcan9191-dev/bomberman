@@ -1,0 +1,1430 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[turkish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{amssymb}
+\usepackage{adjustbox}
+
+% Sayfa ayarları
+\geometry{
+    left=2.5cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=3cm
+}
+
+% Kod renklendirme ayarları
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showspaces=false,
+    showstringspaces=false
+}
+
+% Başlık formatı
+\titleformat{\section}
+{\Large\bfseries\centering}
+{}
+{0em}
+{}[\titlerule]
+
+\titleformat{\subsection}
+{\large\bfseries}
+{}
+{0em}
+{}
+
+% Header ve Footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{Design Document - Pattern Explanation}
+\fancyfoot[C]{\thepage}
+\fancyfoot[R]{Serdar Can - 220401096}
+
+% Hyperlink ayarları
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Design Document Pattern Explanation},
+    pdfauthor={Serdar Can}
+}
+
+\begin{document}
+
+% Başlık sayfası
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+
+{\Huge\bfseries DESIGN DOCUMENT\\[0.5cm]
+PATTERN EXPLANATION\par}
+\vspace{1cm}
+{\Large Bomberman Multiplayer Game\par}
+\vspace{2cm}
+
+\begin{tabular}{ll}
+\textbf{Ad Soyad:} & Serdar Can \\
+\textbf{Öğrenci No:} & 220401096 \\
+\textbf{Proje:} & Bomberman Multiplayer Game \\
+\textbf{Teknoloji:} & Python + Pygame + Flask + Socket.IO + PostgreSQL \\
+\textbf{Tarih:} & 25 Aralık 2025 \\
+\end{tabular}
+
+\vfill
+\end{titlepage}
+
+% İçindekiler
+\tableofcontents
+\newpage
+
+% 1. GENEL BAKIŞ
+\section{Genel Bakış}
+
+\subsection{Proje Yapısı}
+\begin{verbatim}
+projem/
+├── backend/          # Sunucu (Flask + Socket.IO)
+│   ├── models/       # Veri modelleri
+│   ├── repository/   # Veri erişim katmanı
+│   ├── services/     # İş mantığı
+│   └── handlers/     # Socket.IO event handlers
+└── bomberman/        # İstemci (Pygame)
+    ├── model/        # Oyun modelleri
+    ├── view/         # Görsel katman
+    ├── controller/   # Oyun kontrolcüsü
+    ├── service/      # İş mantığı servisleri
+    ├── repository/   # Veri erişim katmanı
+    └── network/      # Ağ iletişimi
+\end{verbatim}
+
+\subsection{Tasarım Deseni Özeti}
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+\textbf{Kategori} & \textbf{Desen} & \textbf{Dosya Konumu} \\
+\hline
+Creational & Factory Method & \texttt{bomberman/view/characters.py} \\
+\hline
+Structural & Adapter & \texttt{bomberman/model/player\_decorator.py} \\
+\hline
+Structural & Decorator & \texttt{bomberman/model/player\_decorator.py} \\
+\hline
+Behavioral & Observer & \texttt{bomberman/service/game\_event\_service.py} \\
+\hline
+Behavioral & Strategy & \texttt{bomberman/model/enemy.py} \\
+\hline
+Data Access & Repository & \texttt{bomberman/repository/}, \texttt{backend/repository/} \\
+\hline
+Architectural & MVC & \texttt{bomberman/model/}, \texttt{view/}, \texttt{controller/} \\
+\hline
+\end{tabularx}
+\caption{Tasarım Desenleri Özeti}
+\end{table}
+
+\textbf{TOPLAM:} 7 farklı tasarım deseni (Gereksinim: 5)
+
+% 2. KULLANILAN TASARIM DESENLERİ
+\section{Kullanılan Tasarım Desenleri}
+
+\begin{enumerate}
+    \item Factory Method Pattern (Creational) \checkmark
+    \item Adapter Pattern (Structural) \checkmark
+    \item Decorator Pattern (Structural) \checkmark
+    \item Observer Pattern (Behavioral) \checkmark
+    \item Strategy Pattern (Behavioral) \checkmark
+    \item Repository Pattern (Data Access) \checkmark
+    \item MVC Pattern (Architectural) \checkmark
+\end{enumerate}
+
+% 3. DETAYLI PATTERN AÇIKLAMALARI
+\section{Detaylı Pattern Açıklamaları}
+
+\subsection{Factory Method Pattern (Creational) \checkmark}
+
+\subsubsection{Tanım}
+Factory Method, nesne oluşturma sorumluluğunu alt sınıflara devreden bir yaratımsal desendir. Nesne oluşturma mantığını merkezi bir yerde toplar.
+
+\subsubsection{Projede Nerede Kullanıldı?}
+\textbf{Dosya:} \texttt{bomberman/view/characters.py}
+
+\textbf{Ana Bileşenler:}
+\begin{itemize}
+    \item CharacterFactory (Satır 26-43)
+    \item MonsterFactory (Satır 66-102)
+    \item EffectFactory (Satır 37-43)
+\end{itemize}
+
+\subsubsection{Kod Örneği}
+\textbf{Dosya:} \texttt{bomberman/view/characters.py}
+
+\textbf{CharacterFactory (Satır 26-43):}
+\begin{lstlisting}
+@staticmethod
+def roster() -> Sequence[Character]:
+    """Tüm karakterleri döndürür"""
+    return [
+        Character(
+            id="bomberman",
+            name="Bomberman",
+            description="Klasik bomba ustası",
+            accent_color=(70, 130, 255),
+            avatar_color=(255, 200, 100),
+            tagline="Bomba patlatma uzmanı",
+            image_name="bomberman.png"
+        ),
+        # ... diğer karakterler
+    ]
+
+@staticmethod
+def find_by_id(character_id: str) -> Character | None:
+    """ID'ye göre karakter bulur"""
+    return next((c for c in CharacterFactory.roster() 
+                if c.id == character_id), None)
+\end{lstlisting}
+
+\textbf{MonsterFactory (Satır 66-102):}
+\begin{lstlisting}
+@staticmethod
+def roster() -> Sequence[Monster]:
+    """Tüm düşman tiplerini döndürür"""
+    return [
+        Monster(id="m1", name="Static Enemy", ...),
+        Monster(id="m2", name="Chasing Enemy", ...),
+        Monster(id="m3", name="Smart Enemy", ...),
+    ]
+
+@staticmethod
+def create(enemy_type: str, position: Tuple[int, int]):
+    """Factory Method: Düşman tipi ve pozisyona göre düşman instance'ı oluşturur"""
+    from model.enemy import StaticEnemy, ChasingEnemy, SmartEnemy, EnemyType
+    
+    if enemy_type == "STATIC" or enemy_type == EnemyType.STATIC:
+        return StaticEnemy(position)
+    elif enemy_type == "CHASING" or enemy_type == EnemyType.CHASING:
+        return ChasingEnemy(position)
+    elif enemy_type == "SMART" or enemy_type == EnemyType.SMART:
+        return SmartEnemy(position)
+    else:
+        raise ValueError(f"Unknown enemy type: {enemy_type}")
+\end{lstlisting}
+
+\subsubsection{Kullanım Örneği}
+\textbf{Dosya:} \texttt{bomberman/controller/game\_controller.py} (Satır 153)
+\begin{lstlisting}
+enemy = MonsterFactory.create(enemy_type, position)
+\end{lstlisting}
+
+\subsubsection{Neden Kullanıldı?}
+\begin{itemize}
+    \item Karakter ve düşman nesnelerinin merkezi bir yerden yönetilmesi
+    \item Yeni karakter/düşman eklenmesi kolaylaşır
+    \item Client kod karmaşık nesne yaratma detaylarından ayrıştırılır
+\end{itemize}
+
+\subsubsection{Faydaları}
+\begin{itemize}
+    \item[\checkmark] \textbf{Single Responsibility:} Factory sadece nesne yaratmaktan sorumlu
+    \item[\checkmark] \textbf{Open/Closed:} Yeni karakter eklemek için mevcut kod değiştirilmez
+    \item[\checkmark] \textbf{Centralized Management:} Tüm karakterler tek yerden yönetilir
+\end{itemize}
+
+\subsubsection{UML Diyagramı}
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/factory.png}}
+\caption{Factory Method Pattern - Class Diagram}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/factory_s.png}}
+\caption{Factory Method Pattern - Sequence Diagram}
+\end{figure}
+
+\subsection{Adapter Pattern (Structural) \checkmark}
+
+\subsubsection{Tanım}
+Adapter, uyumsuz interface'leri birlikte çalışacak şekilde adapte eden yapısal bir desendir.
+
+\subsubsection{Projede Nerede Kullanıldı?}
+\textbf{Dosya:} \texttt{bomberman/model/player\_decorator.py}
+
+\textbf{Ana Bileşenler:}
+\begin{itemize}
+    \item PlayerInterface (Satır 19-40) - Target Interface
+    \item BombermanAdapter (Satır 73-96) - Adapter
+    \item Bomberman (\texttt{bomberman/model/bomberman.py}, Satır 9-40) - Adaptee
+\end{itemize}
+
+\subsubsection{Kod Örneği}
+\textbf{Dosya:} \texttt{bomberman/model/player\_decorator.py}
+
+\textbf{PlayerInterface (Satır 19-40):}
+\begin{lstlisting}
+class PlayerInterface(ABC):
+    """Target interface for Adapter and Decorator patterns"""
+    
+    @abstractmethod
+    def get_speed(self) -> float:
+        """Oyuncu hızını döndürür"""
+        pass
+    
+    @abstractmethod
+    def get_bomb_count(self) -> int:
+        """Bomba sayısını döndürür"""
+        pass
+    
+    @abstractmethod
+    def get_bomb_power(self) -> int:
+        """Bomba gücünü döndürür"""
+        pass
+    
+    @abstractmethod
+    def get_health(self) -> int:
+        """Sağlık puanını döndürür"""
+        pass
+\end{lstlisting}
+
+\textbf{BombermanAdapter (Satır 73-96):}
+\begin{lstlisting}
+class BombermanAdapter(PlayerInterface):
+    """
+    Adapter Pattern: Bomberman model'ini PlayerInterface'e adapte eder.
+    Bu sayede Bomberman'ı decorator pattern ile kullanabiliriz.
+    """
+    
+    def __init__(self, bomberman: 'Bomberman') -> None:
+        self._bomberman = bomberman
+    
+    def get_speed(self) -> float:
+        return self._bomberman.speed
+    
+    def get_bomb_count(self) -> int:
+        return self._bomberman.bomb_count
+    
+    def get_bomb_power(self) -> int:
+        return self._bomberman.bomb_power
+    
+    def get_health(self) -> int:
+        return self._bomberman.health
+\end{lstlisting}
+
+\subsubsection{Kullanım Örneği}
+\textbf{Dosya:} \texttt{bomberman/service/powerup\_service.py} (Satır 72-106)
+\begin{lstlisting}
+def apply_powerup(self, player: PlayerInterface, powerup_type: PowerupType) -> PlayerInterface:
+    """Power-up uygula ve decorator döndür"""
+    # Eğer player Bomberman ise, önce adapter ile sarmala
+    if isinstance(player, Bomberman):
+        player = BombermanAdapter(player)
+    
+    # Power-up tipine göre decorator oluştur
+    if powerup_type == PowerupType.SPEED:
+        return SpeedBoostDecorator(player)
+    elif powerup_type == PowerupType.BOMB_COUNT:
+        return BombCountBoostDecorator(player)
+    # ...
+\end{lstlisting}
+
+\subsubsection{Neden Kullanıldı?}
+\begin{itemize}
+    \item Bomberman sınıfı orijinal olarak PlayerInterface implement etmiyordu
+    \item Decorator Pattern kullanabilmek için ortak bir interface gerekiyordu
+    \item Mevcut Bomberman kodunu değiştirmeden adapte ettik
+\end{itemize}
+
+\subsubsection{Faydaları}
+\begin{itemize}
+    \item[\checkmark] \textbf{Interface Compatibility:} Uyumsuz interface'leri birleştirir
+    \item[\checkmark] \textbf{Non-Invasive:} Mevcut Bomberman koduna dokunmadan çalışır
+    \item[\checkmark] \textbf{Enables Decorator:} Decorator Pattern için gerekli interface sağlar
+\end{itemize}
+
+\subsubsection{UML Diyagramı}
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/adapter_decorater.png}}
+\caption{Adapter \& Decorator Pattern - Class Diagram}
+\end{figure}
+
+\subsection{Decorator Pattern (Structural) \checkmark}
+
+\subsubsection{Tanım}
+Decorator, nesnelere runtime'da dinamik olarak yeni davranışlar ekleyen yapısal bir desendir.
+
+\subsubsection{Projede Nerede Kullanıldı?}
+\textbf{Dosya:} \texttt{bomberman/model/player\_decorator.py}
+
+\textbf{Ana Bileşenler:}
+\begin{itemize}
+    \item PlayerDecorator (Satır 43-70) - Base Decorator
+    \item SpeedBoostDecorator (Satır 99-109)
+    \item BombCountBoostDecorator (Satır 112-122)
+    \item BombPowerBoostDecorator (Satır 125-135)
+    \item HealthBoostDecorator (Satır 138-148)
+\end{itemize}
+
+\subsubsection{Kod Örneği}
+\textbf{PlayerDecorator (Satır 43-70):}
+\begin{lstlisting}
+class PlayerDecorator(PlayerInterface):
+    """Base decorator class - Decorator Pattern"""
+    
+    def __init__(self, player: PlayerInterface) -> None:
+        self._player = player
+    
+    def get_speed(self) -> float:
+        return self._player.get_speed()
+    
+    def get_bomb_count(self) -> int:
+        return self._player.get_bomb_count()
+    
+    def get_bomb_power(self) -> int:
+        return self._player.get_bomb_power()
+    
+    def get_health(self) -> int:
+        return self._player.get_health()
+\end{lstlisting}
+
+\textbf{SpeedBoostDecorator (Satır 99-109):}
+\begin{lstlisting}
+class SpeedBoostDecorator(PlayerDecorator):
+    """Speed Boost power-up decorator"""
+    SPEED_MULTIPLIER = 1.25
+    
+    def get_speed(self) -> float:
+        return self._player.get_speed() * self.SPEED_MULTIPLIER
+\end{lstlisting}
+
+\textbf{BombCountBoostDecorator (Satır 112-122):}
+\begin{lstlisting}
+class BombCountBoostDecorator(PlayerDecorator):
+    """Bomb Count power-up decorator"""
+    BOMB_COUNT_BOOST = 1
+    
+    def get_bomb_count(self) -> int:
+        return self._player.get_bomb_count() + self.BOMB_COUNT_BOOST
+\end{lstlisting}
+
+\subsubsection{Kullanım Örneği}
+\textbf{Dosya:} \texttt{bomberman/controller/game\_controller.py} (Satır 375-395)
+\begin{lstlisting}
+def _check_powerup_collection(self) -> None:
+    """Power-up toplama kontrolü"""
+    # Power-up toplandı mı kontrol et
+    powerup = self._check_powerup_collision()
+    if powerup:
+        # Decorator oluştur ve uygula
+        self._player_decorator = self._powerup_service.apply_powerup(
+            self._player_decorator or BombermanAdapter(self.player),
+            powerup.powerup_type
+        )
+        
+        # Decorated player'dan değerleri al ve base Bomberman'a uygula
+        self.player.speed = self._player_decorator.get_speed()
+        self.player.bomb_count = self._player_decorator.get_bomb_count()
+        self.player.bomb_power = self._player_decorator.get_bomb_power()
+        self.player.health = self._player_decorator.get_health()
+\end{lstlisting}
+
+\textbf{Decorator Chain Örneği:}
+\begin{lstlisting}
+# Base player
+player = BombermanAdapter(bomberman)
+
+# Power-up'ları ekle (decorator chain)
+player = SpeedBoostDecorator(player)           # Hız %25 artar
+player = BombCountBoostDecorator(player)        # Bomba sayısı +1
+player = BombPowerBoostDecorator(player)        # Bomba gücü +1
+
+# Artık player'ın hızı %25 fazla, bomba sayısı ve gücü +1
+speed = player.get_speed()        # base_speed * 1.25
+bomb_count = player.get_bomb_count()  # base_count + 1
+\end{lstlisting}
+
+\subsubsection{Neden Kullanıldı?}
+\begin{itemize}
+    \item Power-up sistemini esnek ve genişletilebilir yapma
+    \item Runtime'da dinamik olarak özellik ekleme/çıkarma
+    \item Power-up kombinasyonlarını kolayca yönetme
+\end{itemize}
+
+\subsubsection{Faydaları}
+\begin{itemize}
+    \item[\checkmark] \textbf{Runtime Flexibility:} Oyun sırasında özellikler eklenebilir
+    \item[\checkmark] \textbf{Composability:} Decorator'lar zincirlenerek kombinasyonlar oluşturulur
+    \item[\checkmark] \textbf{Open/Closed:} Yeni power-up eklemek için mevcut kod değişmez
+    \item[\checkmark] \textbf{Single Responsibility:} Her decorator tek bir power-up'tan sorumlu
+\end{itemize}
+
+\subsubsection{UML Diyagramı}
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/adapter_decorater.png}}
+\caption{Adapter \& Decorator Pattern - Class Diagram}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/decorater_s.png}}
+\caption{Decorator Pattern - Sequence Diagram}
+\end{figure}
+
+\subsection{Observer Pattern (Behavioral) \checkmark}
+
+\subsubsection{Tanım}
+Observer, bir nesnede (Subject) olan değişiklikleri diğer nesnelere (Observer) otomatik olarak bildiren davranışsal bir desendir.
+
+\subsubsection{Projede Nerede Kullanıldı?}
+\textbf{Dosyalar:}
+\begin{itemize}
+    \item \texttt{bomberman/service/game\_event\_service.py} (Subject)
+    \item \texttt{bomberman/service/game\_observers.py} (Concrete Observers)
+\end{itemize}
+
+\textbf{Ana Bileşenler:}
+\begin{itemize}
+    \item GameEventService (Satır 41-82) - Subject
+    \item GameObserver (Satır 32-38) - Observer Interface
+    \item SoundObserver (Satır 18-46) - Concrete Observer
+    \item ScoreObserver (Satır 49-91) - Concrete Observer
+    \item LoggerObserver (Satır 94-99) - Concrete Observer
+\end{itemize}
+
+\subsubsection{Kod Örneği}
+\textbf{GameEventType (Satır 13-22):}
+\begin{lstlisting}
+class GameEventType(Enum):
+    BOMB_PLACED = "bomb_placed"
+    BOMB_EXPLODED = "bomb_exploded"
+    ENEMY_KILLED = "enemy_killed"
+    PLAYER_DAMAGED = "player_damaged"
+    PLAYER_DIED = "player_died"
+    POWERUP_COLLECTED = "powerup_collected"
+    WALL_DESTROYED = "wall_destroyed"
+    LEVEL_COMPLETED = "level_completed"
+\end{lstlisting}
+
+\textbf{GameEventService (Satır 41-82):}
+\begin{lstlisting}
+class GameEventService:
+    """Subject - Observer Pattern"""
+    
+    def __init__(self) -> None:
+        self._observers: list[GameObserver] = []
+    
+    def attach(self, observer: GameObserver) -> None:
+        """Observer ekle"""
+        if observer not in self._observers:
+            self._observers.append(observer)
+    
+    def detach(self, observer: GameObserver) -> None:
+        """Observer çıkar"""
+        if observer in self._observers:
+            self._observers.remove(observer)
+    
+    def notify(self, event: GameEvent) -> None:
+        """Tüm observer'ları bilgilendir"""
+        for observer in self._observers:
+            observer.on_event(event)
+    
+    def emit(self, event_type: GameEventType, **data) -> None:
+        """Event yayınla (shortcut method)"""
+        event = GameEvent(event_type, data)
+        self.notify(event)
+\end{lstlisting}
+
+\textbf{SoundObserver (Satır 18-46):}
+\begin{lstlisting}
+class SoundObserver(GameObserver):
+    """Ses efektlerini yöneten observer"""
+    
+    def __init__(self, sound_service: SoundService) -> None:
+        self._sound_service = sound_service
+    
+    def on_event(self, event: GameEvent) -> None:
+        if event.event_type == GameEventType.BOMB_EXPLODED:
+            self._sound_service.play_sound("explosion.wav")
+        elif event.event_type == GameEventType.ENEMY_KILLED:
+            self._sound_service.play_sound("enemy_death.wav")
+        elif event.event_type == GameEventType.PLAYER_DIED:
+            self._sound_service.play_sound("player_death.wav")
+        # ...
+\end{lstlisting}
+
+\textbf{ScoreObserver (Satır 49-91):}
+\begin{lstlisting}
+class ScoreObserver(GameObserver):
+    """Skor takibi yapan observer"""
+    
+    def __init__(self) -> None:
+        self.score = 0
+        self.walls_destroyed = 0
+        self.enemies_killed = 0
+    
+    def on_event(self, event: GameEvent) -> None:
+        if event.event_type == GameEventType.ENEMY_KILLED:
+            self.enemies_killed += 1
+            self.score += 100
+        elif event.event_type == GameEventType.WALL_DESTROYED:
+            self.walls_destroyed += 1
+            self.score += 10
+        elif event.event_type == GameEventType.POWERUP_COLLECTED:
+            self.score += 5
+        elif event.event_type == GameEventType.LEVEL_COMPLETED:
+            self.score += 500
+        # ...
+\end{lstlisting}
+
+\subsubsection{Kullanım Örneği}
+\textbf{Dosya:} \texttt{bomberman/controller/game\_controller.py} (Satır 48-53)
+\begin{lstlisting}
+def __init__(self, ...):
+    # Observer'ları oluştur ve attach et
+    self._event_service = GameEventService()
+    self._event_service.attach(SoundObserver(self._sound_service))
+    self._event_service.attach(ScoreObserver())
+    self._event_service.attach(LoggerObserver())
+\end{lstlisting}
+
+\textbf{Event Yayınlama Örnekleri:}
+\begin{itemize}
+    \item Duvar yıkıldığında (Satır 279-282, 470-473): \texttt{emit(GameEventType.WALL\_DESTROYED, position=(x, y))}
+    \item Power-up toplandığında (Satır 396-400): \texttt{emit(GameEventType.POWERUP\_COLLECTED, ...)}
+    \item Bomba patladığında (Satır 490-493): \texttt{emit(GameEventType.BOMB\_EXPLODED, ...)}
+    \item Düşman öldürüldüğünde (Satır 627-630, 657-660): \texttt{emit(GameEventType.ENEMY\_KILLED, ...)}
+    \item Oyuncu öldüğünde (Satır 651): \texttt{emit(GameEventType.PLAYER\_DIED)}
+\end{itemize}
+
+\subsubsection{Bildirim Akışı}
+\begin{enumerate}
+    \item GameController bir event oluştuğunda \texttt{emit()} çağırır
+    \item GameEventService.emit() çağrılır (Satır 71-74) - GameEvent oluşturulur, notify() çağrılır
+    \item GameEventService.notify() çağrılır (Satır 66-69) - Tüm observer'lar döngüye alınır
+    \item Observer'lar event'i işler: SoundObserver ses çalar, ScoreObserver skoru günceller, LoggerObserver log yazar
+\end{enumerate}
+
+\subsubsection{Neden Kullanıldı?}
+\begin{itemize}
+    \item Oyun eventlerini merkezi bir yerden yönetme
+    \item Ses, skor, log gibi sistemleri birbirinden bağımsız tutma
+    \item Yeni observer eklemek kolay (örn: achievements, statistics)
+\end{itemize}
+
+\subsubsection{Faydaları}
+\begin{itemize}
+    \item[\checkmark] \textbf{Loose Coupling:} Subject ve Observer birbirinden bağımsız
+    \item[\checkmark] \textbf{Scalability:} Yeni observer eklemek kolay
+    \item[\checkmark] \textbf{Separation of Concerns:} Her observer kendi işinden sorumlu
+    \item[\checkmark] \textbf{Dynamic Subscription:} Runtime'da observer eklenip çıkarılabilir
+\end{itemize}
+
+\subsubsection{UML Diyagramı}
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/observer.png}}
+\caption{Observer Pattern - Class Diagram}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/observer_s.png}}
+\caption{Observer Pattern - Sequence Diagram}
+\end{figure}
+
+\subsection{Strategy Pattern (Behavioral) \checkmark}
+
+\subsubsection{Tanım}
+Strategy, bir algoritma ailesini tanımlayan ve birbirinin yerine kullanılabilir hale getiren davranışsal bir desendir.
+
+\subsubsection{Projede Nerede Kullanıldı?}
+\textbf{Dosya:} \texttt{bomberman/model/enemy.py}
+
+\textbf{Ana Bileşenler:}
+\begin{itemize}
+    \item Enemy (Satır 30-77) - Strategy Interface (Abstract Base Class)
+    \item StaticEnemy (Satır 80-131) - Concrete Strategy 1
+    \item ChasingEnemy (Satır 133-208) - Concrete Strategy 2
+    \item SmartEnemy (Satır 210-278) - Concrete Strategy 3
+\end{itemize}
+
+\subsubsection{Kod Örneği}
+\textbf{Enemy (Satır 30-77) - Strategy Interface:}
+\begin{lstlisting}
+class Enemy(ABC):
+    """Base Enemy sınıfı - Strategy Pattern"""
+    
+    def __init__(self, position: Tuple[int, int], enemy_type: EnemyType):
+        self.position = position
+        self.health = self.max_health
+        self.enemy_type = enemy_type
+        self.move_interval = 0.0
+    
+    @property
+    @abstractmethod
+    def max_health(self) -> int:
+        pass
+    
+    @abstractmethod
+    def update(
+        self,
+        player_pos: Tuple[int, int] | None,
+        tile_provider: Callable[[int, int], TileType],
+    ) -> None:
+        """Her alt sınıf kendi hareket stratejisini uygular"""
+        pass
+\end{lstlisting}
+
+\textbf{StaticEnemy (Satır 80-131) - Concrete Strategy 1:}
+\begin{lstlisting}
+class StaticEnemy(Enemy):
+    """
+    Statik Düşman: Doğduğu yerden sadece 1 birim uzaklığa hareket eder.
+    Rastgele yönlerde sınırlı hareket.
+    """
+    MAX_HEALTH = 20
+    
+    def __init__(self, position: Tuple[int, int]):
+        super().__init__(position, EnemyType.STATIC)
+        self._spawn_position = position
+    
+    def update(self, player_pos, tile_provider) -> None:
+        """Doğduğu yerden max 1 birim uzakta hareket et"""
+        for dx, dy in [(0,1), (0,-1), (1,0), (-1,0)]:
+            new_x = self.position[0] + dx
+            new_y = self.position[1] + dy
+            
+            distance = abs(new_x - self._spawn_position[0]) + \
+                      abs(new_y - self._spawn_position[1])
+            
+            if distance <= 1 and can_move_to(new_x, new_y, tile_provider):
+                self.position = (new_x, new_y)
+                break
+\end{lstlisting}
+
+\textbf{ChasingEnemy (Satır 133-208) - Concrete Strategy 2:}
+\begin{lstlisting}
+class ChasingEnemy(Enemy):
+    """
+    Takip Eden Düşman: Kendi satır/sütunu boyunca oyuncuya yaklaşır.
+    Bomberman'a doğru hareket eder.
+    """
+    MAX_HEALTH = 30
+    
+    def update(self, player_pos, tile_provider) -> None:
+        """Satır/sütun boyunca oyuncuya yaklaş"""
+        if not player_pos:
+            return
+        
+        # Yatay veya dikey eksende oyuncuya yaklaş
+        if self._move_horizontal:
+            # Yatay hareket (aynı satırda)
+            if player_pos[0] > self.position[0]:
+                new_pos = (self.position[0] + 1, self.position[1])
+            else:
+                new_pos = (self.position[0] - 1, self.position[1])
+        else:
+            # Dikey hareket (aynı sütunda)
+            if player_pos[1] > self.position[1]:
+                new_pos = (self.position[0], self.position[1] + 1)
+            else:
+                new_pos = (self.position[0], self.position[1] - 1)
+        
+        # Çarpışma kontrolü ve hareket
+        if can_move_to(new_pos[0], new_pos[1], tile_provider):
+            self.position = new_pos
+        else:
+            # Yön değiştir
+            self._move_horizontal = not self._move_horizontal
+\end{lstlisting}
+
+\textbf{SmartEnemy (Satır 210-278) - Concrete Strategy 3:}
+\begin{lstlisting}
+class SmartEnemy(Enemy):
+    """
+    Akıllı Düşman: A* algoritması ile en kısa yolu bulur.
+    Bomberman'ı köşeye sıkıştırmaya çalışır.
+    """
+    MAX_HEALTH = 40
+    
+    def update(self, player_pos, tile_provider) -> None:
+        """A* pathfinding ile en kısa yolu bul"""
+        if not player_pos:
+            return
+        
+        # A* pathfinding algoritması ile en kısa yolu bul
+        path = self._find_path(self.position, player_pos, tile_provider)
+        
+        if len(path) > 1:
+            next_pos = path[1]  # path[0] = current position
+            self.position = next_pos
+\end{lstlisting}
+
+\subsubsection{Kullanım Örneği}
+\textbf{Dosya:} \texttt{bomberman/controller/game\_controller.py} (Satır 191)
+\begin{lstlisting}
+# Game loop içinde
+for enemy in self._enemies:
+    enemy.update(self.player.position, self._tile_provider)
+    # Her düşman kendi stratejisini uygular:
+    # - StaticEnemy: Sınırlı hareket
+    # - ChasingEnemy: Satır/sütun boyunca takip
+    # - SmartEnemy: A* ile en kısa yol
+\end{lstlisting}
+
+\textbf{Düşman Oluşturma (Satır 153):}
+\begin{lstlisting}
+enemy = MonsterFactory.create(enemy_type, position)
+# Factory Method Pattern ile strateji seçilir
+\end{lstlisting}
+
+\subsubsection{Düşman Stratejileri Karşılaştırması}
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|X|X|X|}
+\hline
+\textbf{Strateji} & \textbf{Sağlık} & \textbf{Hız} & \textbf{Davranış} & \textbf{Zorluk} \\
+\hline
+StaticEnemy & 20 HP & Yavaş (1.6s) & Sadece spawn noktası etrafında & Kolay \\
+\hline
+ChasingEnemy & 30 HP & Orta (0.8s) & Satır/sütun boyunca takip & Orta \\
+\hline
+SmartEnemy & 40 HP & Hızlı (0.4s) & A* ile en kısa yol & Zor \\
+\hline
+\end{tabularx}
+\caption{Düşman Stratejileri Karşılaştırması}
+\end{table}
+
+\subsubsection{Neden Kullanıldı?}
+\begin{itemize}
+    \item Farklı düşman davranışlarını birbirinden bağımsız yapma
+    \item Yeni düşman tipi eklemek kolay
+    \item Her düşman kendi hareket algoritmasına sahip
+\end{itemize}
+
+\subsubsection{Faydaları}
+\begin{itemize}
+    \item[\checkmark] \textbf{Interchangeable:} Düşmanlar birbirinin yerine kullanılabilir
+    \item[\checkmark] \textbf{Open/Closed:} Yeni strateji eklemek için mevcut kod değişmez
+    \item[\checkmark] \textbf{Single Responsibility:} Her strateji kendi algoritmasından sorumlu
+    \item[\checkmark] \textbf{Testability:} Her strateji ayrı ayrı test edilebilir
+\end{itemize}
+
+\subsubsection{UML Diyagramı}
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/strategy_pattern.png}}
+\caption{Strategy Pattern - Class Diagram}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/strategy_pattern_s.png}}
+\caption{Strategy Pattern - Sequence Diagram}
+\end{figure}
+
+\subsection{Repository Pattern (Data Access) \checkmark}
+
+\subsubsection{Tanım}
+Repository, veri erişim mantığını iş mantığından ayıran ve veri kaynağını soyutlayan bir desendir.
+
+\subsubsection{Projede Nerede Kullanıldı?}
+\textbf{Frontend (Client-side):}
+\begin{itemize}
+    \item \texttt{bomberman/repository/level\_repository\_json.py}
+    \item \texttt{bomberman/repository/level\_repository\_postgresql.py}
+\end{itemize}
+
+\textbf{Backend (Server-side):}
+\begin{itemize}
+    \item \texttt{backend/repository/room\_repository.py}
+\end{itemize}
+
+\subsubsection{Frontend Repository (Client-side)}
+\textbf{Dosya:} \texttt{bomberman/repository/level\_repository\_json.py} (Satır 14-203)
+\begin{lstlisting}
+class LevelRepositoryJSON:
+    """JSON dosyasından level verilerini yönetir"""
+    
+    def __init__(self, json_path: str | None = None) -> None:
+        self._json_path = Path(json_path or "data/levels.json")
+        self._cache: dict[str, LevelDefinition] | None = None
+    
+    def find_by_id(self, level_id: str) -> Optional[LevelDefinition]:
+        """ID'ye göre level bulur"""
+        definitions = self._load_all()
+        return definitions.get(level_id)
+    
+    def find_all(self) -> Iterable[LevelDefinition]:
+        """Tüm levelları getirir"""
+        definitions = self._load_all()
+        for key in sorted(definitions.keys()):
+            yield definitions[key]
+    
+    def save(self, definition: LevelDefinition) -> None:
+        """Level kaydeder"""
+        definitions = self._load_all()
+        definitions[definition.id] = definition
+        self._save_all(definitions)
+    
+    def delete(self, level_id: str) -> bool:
+        """Level siler"""
+        definitions = self._load_all()
+        if level_id in definitions:
+            del definitions[level_id]
+            self._save_all(definitions)
+            return True
+        return False
+\end{lstlisting}
+
+\textbf{Dosya:} \texttt{bomberman/repository/level\_repository\_postgresql.py} (Satır 25-220)
+\begin{lstlisting}
+class LevelRepositoryPostgreSQL:
+    """PostgreSQL'den level verilerini yönetir"""
+    
+    def __init__(self, connection_string: str) -> None:
+        self._connection_string = connection_string
+    
+    def find_by_id(self, level_id: str) -> Optional[LevelDefinition]:
+        """ID'ye göre level bulur"""
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("SELECT * FROM levels WHERE id = %s", (level_id,))
+            row = cursor.fetchone()
+            if row:
+                return self._map_row_to_definition(row, ...)
+            return None
+        finally:
+            conn.close()
+    
+    def find_all(self) -> Iterable[LevelDefinition]:
+        """Tüm levelları getirir"""
+        conn = self._get_connection()
+        try:
+            cursor.execute("SELECT * FROM levels ORDER BY id")
+            for row in cursor.fetchall():
+                yield self._map_row_to_definition(row, ...)
+        finally:
+            conn.close()
+\end{lstlisting}
+
+\subsubsection{Backend Repository (Server-side)}
+\textbf{Dosya:} \texttt{backend/repository/room\_repository.py} (Satır 17-464)
+\begin{lstlisting}
+class RoomRepository:
+    """PostgreSQL'de oda yönetimi repository"""
+    
+    def __init__(self) -> None:
+        self.connection_string = get_database_url()
+    
+    def create_room(self, room: GameRoom) -> bool:
+        """Yeni oda oluştur"""
+        with self._get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO rooms (room_id, room_code, level_id, 
+                                 level_width, level_height, started)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (room.room_id, room.room_code, room.level_id, 
+                  room.level_width, room.level_height, room.started))
+            
+            # Oyuncuları ekle
+            for player in room.players:
+                cur.execute("""
+                    INSERT INTO room_players (room_id, player_id, username, 
+                                              socket_id, position_x, position_y, 
+                                              health, ready)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (...))
+            
+            conn.commit()
+            return True
+    
+    def get_room_by_code(self, room_code: str) -> Optional[GameRoom]:
+        """Oda koduna göre oda bul"""
+        with self._get_connection() as conn:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("SELECT * FROM rooms WHERE room_code = %s", (room_code,))
+            row = cursor.fetchone()
+            if row:
+                return self._map_row_to_room(row, conn)
+            return None
+\end{lstlisting}
+
+\subsubsection{Veri Kaynakları}
+\begin{itemize}
+    \item \textbf{JSON:} \texttt{data/levels.json} (local development)
+    \item \textbf{PostgreSQL:} Neon.tech (production)
+    \item \textbf{Tables:} \texttt{levels}, \texttt{rooms}, \texttt{room\_players}
+\end{itemize}
+
+\subsubsection{Kullanım Örneği}
+\textbf{Dosya:} \texttt{bomberman/service/level\_service.py}
+\begin{lstlisting}
+# Repository seçimi (JSON veya PostgreSQL)
+repository = LevelRepositoryJSON()  # veya LevelRepositoryPostgreSQL(...)
+
+# Level yükleme
+level = repository.find_by_id("level_1")
+
+# Tüm levelları listeleme
+for level in repository.find_all():
+    print(level.id)
+\end{lstlisting}
+
+\subsubsection{Neden Kullanıldı?}
+\begin{itemize}
+    \item Veri erişim mantığını iş mantığından ayırma
+    \item Veri kaynağını değiştirmek kolay (JSON $\leftrightarrow$ PostgreSQL)
+    \item Test yazmak kolaylaşır (mock repository kullanılabilir)
+    \item Database sorguları tek yerde merkezi olarak yönetilir
+\end{itemize}
+
+\subsubsection{Faydaları}
+\begin{itemize}
+    \item[\checkmark] \textbf{Separation of Concerns:} Veri erişim ve iş mantığı ayrı
+    \item[\checkmark] \textbf{Testability:} Mock repository ile kolayca test edilir
+    \item[\checkmark] \textbf{Flexibility:} Veri kaynağı kolayca değiştirilebilir
+    \item[\checkmark] \textbf{Centralized Logic:} Database sorguları tek yerde
+    \item[\checkmark] \textbf{Dependency Inversion:} Service'ler repository interface'ine bağlı
+\end{itemize}
+
+\subsubsection{UML Diyagramı}
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/repository.png}}
+\caption{Repository Pattern - Class Diagram (Frontend)}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{backend/umlpng/repository_pattern_class.png}}
+\caption{Repository Pattern - Class Diagram (Backend)}
+\end{figure}
+
+\subsection{MVC Pattern (Architectural) \checkmark}
+
+\subsubsection{Tanım}
+MVC (Model-View-Controller), uygulamayı üç katmana ayıran mimari bir desendir:
+\begin{itemize}
+    \item \textbf{Model:} Veri ve iş mantığı
+    \item \textbf{View:} Kullanıcı arayüzü
+    \item \textbf{Controller:} Model ve View arasındaki etkileşim
+\end{itemize}
+
+\subsubsection{Projede Nerede Kullanıldı?}
+\begin{itemize}
+    \item \textbf{Model:} \texttt{bomberman/model/}
+    \item \textbf{View:} \texttt{bomberman/view/}
+    \item \textbf{Controller:} \texttt{bomberman/controller/}
+\end{itemize}
+
+\subsubsection{Model (Veri Katmanı)}
+\textbf{Dizin:} \texttt{bomberman/model/}
+
+\textbf{Dosya:} \texttt{bomberman/model/bomberman.py} (Satır 9-40)
+\begin{lstlisting}
+class Bomberman:
+    """Oyuncu modeli"""
+    def __init__(self, character: Character, position: Tuple[int, int]):
+        self.character = character
+        self.position = position
+        self.health = 100
+        self.speed = 1.0
+        self.bomb_count = 1
+        self.bomb_power = 1
+    
+    def take_damage(self, amount: int) -> None:
+        self.health -= amount
+    
+    def heal(self, amount: int) -> None:
+        self.health = min(100, self.health + amount)
+    
+    def is_alive(self) -> bool:
+        return self.health > 0
+\end{lstlisting}
+
+\textbf{Dosya:} \texttt{bomberman/model/enemy.py} (Satır 30-77)
+\begin{lstlisting}
+class Enemy(ABC):
+    """Düşman modeli (Strategy Pattern)"""
+    def __init__(self, position: Tuple[int, int], enemy_type: EnemyType):
+        self.position = position
+        self.health = self.max_health
+        self.enemy_type = enemy_type
+    
+    @abstractmethod
+    def update(self, player_pos, tile_provider) -> None:
+        pass
+\end{lstlisting}
+
+\subsubsection{View (Görsel Katman)}
+\textbf{Dizin:} \texttt{bomberman/view/}
+
+\textbf{Dosya:} \texttt{bomberman/view/game\_scene.py} (Satır 22-758)
+\begin{lstlisting}
+class GameScene:
+    """Ana oyun görünümü - View Layer"""
+    
+    def __init__(self, controller: GameController):
+        self._controller = controller
+    
+    def handle_events(self, events: list[pygame.event.Event]) -> None:
+        """Kullanıcı input'u al ve Controller'a ilet"""
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    self._controller.move_player("up")
+                elif event.key == pygame.K_SPACE:
+                    self._controller.place_bomb()
+    
+    def render(self, surface: pygame.Surface) -> None:
+        """Oyun durumunu ekrana çiz"""
+        # Controller'dan state al
+        game_state = self._controller.view_state()
+        
+        # Render işlemleri
+        self._draw_map(game_state.level)
+        self._draw_player(game_state.player)
+        self._draw_enemies(game_state.enemies)
+        self._draw_bombs(game_state.bombs)
+        self._draw_powerups(game_state.powerups)
+\end{lstlisting}
+
+\subsubsection{Controller (Kontrol Katmanı)}
+\textbf{Dizin:} \texttt{bomberman/controller/}
+
+\textbf{Dosya:} \texttt{bomberman/controller/game\_controller.py} (Satır 28-680)
+\begin{lstlisting}
+class GameController:
+    """Oyun kontrolcüsü - Model ve View arasındaki köprü"""
+    
+    def __init__(self, ...):
+        # Model'ler
+        self.player: Bomberman
+        self._enemies: list[Enemy] = []
+        self._bombs: list[Bomb] = []
+        
+        # Service'ler
+        self._level_service: LevelService
+        self._collision_service: CollisionService
+        self._explosion_service: ExplosionService
+        self._event_service: GameEventService
+        self._powerup_service: PowerupService
+    
+    def move_player(self, direction: str) -> None:
+        """Kullanıcı input'u → Model güncelle"""
+        if direction == "up":
+            new_pos = (self.player.position[0], self.player.position[1] - 1)
+        # ...
+        
+        # Çarpışma kontrolü
+        if self._collision_service.can_move(new_pos, self._level):
+            self.player.position = new_pos  # Model güncellendi
+    
+    def place_bomb(self) -> None:
+        """Bomba yerleştir → Model güncelle"""
+        if len(self._bombs) < self.player.bomb_count:
+            bomb = Bomb(self.player.position, self.player.bomb_power)
+            self._bombs.append(bomb)  # Model güncellendi
+            self._event_service.emit(GameEventType.BOMB_PLACED)
+    
+    def update(self, dt: float) -> None:
+        """Game loop - Model'i güncelle"""
+        # Düşmanları güncelle
+        for enemy in self._enemies:
+            enemy.update(self.player.position, self._tile_provider)
+        
+        # Bombaları güncelle
+        for bomb in self._bombs:
+            bomb.timer -= dt
+            if bomb.timer <= 0:
+                self._handle_explosion(bomb)
+    
+    def view_state(self) -> GameViewState:
+        """View için read-only state döndür"""
+        return GameViewState(
+            player=self.player,
+            enemies=self._enemies,
+            bombs=self._bombs,
+            powerups=self._powerups,
+            level=self._level,
+            # ...
+        )
+\end{lstlisting}
+
+\subsubsection{MVC İletişim Akışı}
+\begin{enumerate}
+    \item \textbf{User Input} → View
+    \item \textbf{View} → Controller: \texttt{GameScene.handle\_events()} → \texttt{GameController.move\_player("up")}
+    \item \textbf{Controller} → Model: \texttt{GameController.move\_player()} → \texttt{self.player.position = new\_pos}
+    \item \textbf{Controller} → Service: \texttt{GameController} → \texttt{CollisionService.can\_move()}
+    \item \textbf{Controller} → View: \texttt{GameController.view\_state()} → \texttt{GameViewState}
+    \item \textbf{View} → Render: \texttt{GameScene.render()} → Ekrana çiz
+\end{enumerate}
+
+\subsubsection{Örnek Akış: Oyuncu Hareketi}
+\begin{enumerate}
+    \item \textbf{View:} Kullanıcı input alır
+    \begin{itemize}
+        \item Dosya: \texttt{bomberman/view/game\_scene.py} (Satır 60-99)
+        \item \texttt{if keys[pygame.K\_UP]: self.\_controller.move\_player("up")}
+    \end{itemize}
+    \item \textbf{Controller:} Model'i günceller
+    \begin{itemize}
+        \item Dosya: \texttt{bomberman/controller/game\_controller.py} (Satır 200-250)
+        \item \texttt{self.player.position = new\_pos} \textit{(Model güncellendi)}
+    \end{itemize}
+    \item \textbf{Controller:} View için state sağlar
+    \begin{itemize}
+        \item Dosya: \texttt{bomberman/controller/game\_controller.py} (Satır 403-450)
+        \item \texttt{game\_state = controller.view\_state()}
+    \end{itemize}
+    \item \textbf{View:} State'i render eder
+    \begin{itemize}
+        \item Dosya: \texttt{bomberman/view/game\_scene.py} (Satır 418-758)
+        \item \texttt{view.render(game\_state)}
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Örnek Akış: Düşman Güncellemesi (Enemy Class İçin Tam Akış)}
+\begin{enumerate}
+    \item \textbf{Model:} Enemy sınıfı tanımlanır
+    \begin{itemize}
+        \item Dosya: \texttt{bomberman/model/enemy.py}
+        \item Enemy (Satır 30-77) - Abstract base class
+        \item StaticEnemy (Satır 80-131), ChasingEnemy (Satır 133-208), SmartEnemy (Satır 210-278)
+    \end{itemize}
+    \item \textbf{Controller:} Düşmanları oluşturur
+    \begin{itemize}
+        \item Dosya: \texttt{bomberman/controller/game\_controller.py} (Satır 153)
+        \item \texttt{enemy = MonsterFactory.create(enemy\_type, position)}
+        \item \texttt{self.\_enemies.append(enemy)}
+    \end{itemize}
+    \item \textbf{Controller:} Game loop içinde düşmanları günceller
+    \begin{itemize}
+        \item Dosya: \texttt{bomberman/controller/game\_controller.py} (Satır 191)
+        \item \texttt{for enemy in self.\_enemies: enemy.update(...)}
+        \item Her düşman kendi stratejisini uygular (Strategy Pattern)
+    \end{itemize}
+    \item \textbf{Controller:} View için state hazırlar
+    \begin{itemize}
+        \item Dosya: \texttt{bomberman/controller/game\_controller.py} (Satır 403-450)
+        \item \texttt{return GameViewState(enemies=self.\_enemies, ...)} \textit{(Model'den View'a)}
+    \end{itemize}
+    \item \textbf{View:} Düşmanları render eder
+    \begin{itemize}
+        \item Dosya: \texttt{bomberman/view/game\_scene.py} (Satır 600-650)
+        \item \texttt{def \_draw\_enemies(self, enemies): ...}
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Neden Kullanıldı?}
+\begin{itemize}
+    \item İş mantığı (Controller) ve görsel (View) ayrılması
+    \item Model bağımsız, test edilebilir
+    \item View değiştirilse bile Controller/Model aynı kalır
+\end{itemize}
+
+\subsubsection{Faydaları}
+\begin{itemize}
+    \item[\checkmark] \textbf{Separation of Concerns:} Her katman kendi sorumluluğuna odaklanır
+    \item[\checkmark] \textbf{Testability:} Model ve Controller ayrı ayrı test edilir
+    \item[\checkmark] \textbf{Maintainability:} Kod değişiklikleri lokalize edilir
+    \item[\checkmark] \textbf{Reusability:} Model başka view'larla kullanılabilir
+    \item[\checkmark] \textbf{Parallel Development:} Ekipler farklı katmanlarda çalışabilir
+\end{itemize}
+
+\subsubsection{UML Diyagramı}
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{bomberman/umlpng/mvc.png}}
+\caption{MVC Architectural Pattern - Component Diagram}
+\end{figure}
+
+% 4. UML DİYAGRAMLARI
+% Backend Component Diagram
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{backend/umlpng/component_diagram.png}}
+\caption{Backend Component Diagram}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{backend/umlpng/room_creation_sequence.png}}
+\caption{Room Creation Sequence Diagram}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{backend/umlpng/game_start_sequence.png}}
+\caption{Game Start Sequence Diagram}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\adjustbox{width=0.75\textwidth,center}{\includegraphics{backend/umlpng/service_layer_class.png}}
+\caption{Service Layer Class Diagram}
+\end{figure}
+
+% 5. SOLID PRENSİPLERİ
+\section{SOLID Prensipleri}
+
+Projede her tasarım deseni SOLID prensiplerine uygun şekilde implement edilmiştir:
+
+\subsection{Single Responsibility Principle (SRP) \checkmark}
+Her sınıf tek bir sorumluluktan sorumlu:
+\begin{itemize}
+    \item CharacterFactory: Sadece karakter yaratma
+    \item SoundObserver: Sadece ses efektleri
+    \item ScoreObserver: Sadece skor takibi
+    \item StaticEnemy, ChasingEnemy, SmartEnemy: Her biri kendi stratejisinden sorumlu
+    \item LevelRepositoryJSON: Sadece JSON'dan veri okuma/yazma
+    \item GameController: Sadece oyun akışını yönetme
+\end{itemize}
+
+\subsection{Open/Closed Principle (OCP) \checkmark}
+Genişletmeye açık, değişime kapalı:
+\begin{itemize}
+    \item Yeni power-up eklemek: PlayerDecorator sınıfından türet
+    \item Yeni düşman eklemek: Enemy sınıfından türet
+    \item Yeni observer eklemek: GameObserver sınıfından türet
+    \item Yeni repository eklemek: Aynı interface'i implement et
+    \item Mevcut kod değiştirilmez
+\end{itemize}
+
+\subsection{Liskov Substitution Principle (LSP) \checkmark}
+Alt sınıflar üst sınıfın yerine kullanılabilir:
+\begin{itemize}
+    \item Tüm Enemy alt sınıfları Enemy interface'ini implement eder
+    \item Tüm PlayerDecorator alt sınıfları PlayerInterface'i implement eder
+    \item Tüm GameObserver alt sınıfları GameObserver interface'ini implement eder
+    \item Client kod interface'e bağlı, somut implementasyona değil
+\end{itemize}
+
+\subsection{Interface Segregation Principle (ISP) \checkmark}
+Sınıflar sadece ihtiyaç duydukları metodları implement eder:
+\begin{itemize}
+    \item PlayerInterface: Sadece gerekli metodlar (speed, bomb\_count, bomb\_power, health)
+    \item GameObserver: Sadece \texttt{on\_event()} metodu
+    \item Repository interface'leri: Sadece CRUD operasyonları
+    \item Her interface minimal ve odaklanmış
+\end{itemize}
+
+\subsection{Dependency Inversion Principle (DIP) \checkmark}
+Yüksek seviye modüller düşük seviye modüllere bağımlı değil:
+\begin{itemize}
+    \item GameController → LevelService (interface'e bağlı)
+    \item GameController → CollisionService (interface'e bağlı)
+    \item Service'ler → Repository interface'lerine bağlı
+    \item Concrete implementasyonlar dependency injection ile verilir
+\end{itemize}
+
+% 6. SONUÇ VE ÖZET
+\section{Sonuç ve Özet}
+
+\subsection{Proje Gereksinimleri ve Uygulama}
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|X|}
+\hline
+\textbf{Tasarım Deseni Kategorisi} & \textbf{Gerekli} & \textbf{Projede Kullanılan} \\
+\hline
+Creational Pattern & 1 & 1 (Factory) \\
+\hline
+Structural Pattern & 1 & 2 (Adapter, Decorator) \\
+\hline
+Behavioral Pattern & 2 & 2 (Observer, Strategy) \\
+\hline
+Repository Pattern & 1 & 3 (JSON, PostgreSQL, Room) \\
+\hline
+Architectural Pattern & 1 & 1 (MVC) \\
+\hline
+\textbf{TOPLAM} & \textbf{5} & \textbf{7} \\
+\hline
+\end{tabularx}
+\caption{Tasarım Desenleri Uygulama Özeti}
+\end{table}
+
+
+
+\subsection{Kod İstatistikleri}
+\textbf{Frontend:}
+\begin{itemize}
+    \item Model: 6+ dosya
+    \item View: 8+ dosya
+    \item Controller: 1 dosya (680 satır)
+    \item Service: 12+ dosya
+    \item Repository: 3 dosya
+\end{itemize}
+
+\textbf{Backend:}
+\begin{itemize}
+    \item Models: 2 dosya
+    \item Repository: 1 dosya (464 satır)
+    \item Services: 10+ dosya
+    \item Handlers: 2 dosya
+\end{itemize}
+
+\subsection{Tasarım Deseni Kullanımı}
+\begin{itemize}
+    \item \textbf{Factory Method:} 3 factory sınıfı (Character, Monster, Effect)
+    \item \textbf{Decorator:} 4 decorator sınıfı (Speed, BombCount, BombPower, Health)
+    \item \textbf{Observer:} 3 observer sınıfı (Sound, Score, Logger)
+    \item \textbf{Strategy:} 3 strateji sınıfı (Static, Chasing, Smart enemies)
+    \item \textbf{Repository:} 3 repository sınıfı (LevelJSON, LevelPostgreSQL, Room)
+    \item \textbf{MVC:} Tam katmanlı mimari (10+ model, 8+ view, 1 controller)
+\end{itemize}
+
+\subsection{UML Diyagramları}
+\begin{itemize}
+    \item \textbf{Frontend:} 10 diyagram (Class + Sequence)
+    \item \textbf{Backend:} 5 diyagram (Class + Component + Sequence)
+    \item \textbf{Toplam:} 15 UML diyagramı
+\end{itemize}
+
+
+
+
+
+% BELGE BİLGİLERİ
+\vspace{2cm}
+\section*{Belge Bilgileri}
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Hazırlayan:} & Serdar Can \\
+\textbf{Öğrenci No:} & 220401096 \\
+\textbf{Proje:} & Bomberman  Game \\
+\textbf{Tarih:} & 27 Aralık 2025 \\
+
+\end{tabular}
+\end{center}
+
+\end{document}
+
